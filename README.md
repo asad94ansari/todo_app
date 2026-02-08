@@ -1,6 +1,6 @@
 # Todo Application - Complete Full-Stack Solution with AI Integration
 
-Developed by: Naveed Tech Lab
+Developed by: Muhammad Asad
 
 ## Project Overview
 
