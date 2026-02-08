@@ -1,0 +1,133 @@
+# Default values for todo-stack
+
+# Global settings
+global:
+  imageRegistry: ""
+  storageClass: ""
+  imagePullSecrets: []
+
+# Backend service configuration
+backend:
+  enabled: true
+  image:
+    repository: todo-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    DATABASE_URL: "postgresql://postgres:password@postgres:5432/todo_db"
+    SECRET_KEY: "change-this-in-production"
+    ALGORITHM: "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    httpGet:
+      path: /health
+      port: 8000
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    httpGet:
+      path: /health
+      port: 8000
+
+# Frontend service configuration
+frontend:
+  enabled: true
+  image:
+    repository: todo-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: NodePort
+    port: 3000
+    # nodePort: 30080  # Uncomment to specify a NodePort
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  env:
+    NEXT_PUBLIC_API_BASE_URL: "http://backend-service:8000"
+    NEXT_PUBLIC_CHAT_API_URL: "http://agent-service:8001"
+  livenessProbe:
+    enabled: false
+  readinessProbe:
+    enabled: false
+
+# MCP Server service configuration
+mcpServer:
+  enabled: true
+  image:
+    repository: todo-mcp-server
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    DATABASE_URL: "postgresql://postgres:password@postgres:5432/todo_db"
+    SECRET_KEY: "change-this-in-production"
+    ALGORITHM: "HS256"
+    OPENAI_API_KEY: "set-your-openai-key"
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    httpGet:
+      path: /health
+      port: 8080
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    httpGet:
+      path: /health
+      port: 8080
+
+# Agent service configuration (part of MCP server)
+agentService:
+  enabled: true
+  image:
+    repository: todo-mcp-server
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8001
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    OPENAI_API_KEY: "set-your-openai-key"
+    MCP_SERVER_URL: "http://mcp-server-service:8080"
+    SECRET_KEY: "change-this-in-production"

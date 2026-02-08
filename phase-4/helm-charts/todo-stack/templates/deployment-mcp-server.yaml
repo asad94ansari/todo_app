@@ -1,0 +1,51 @@
+{{- if .Values.mcpServer.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo-stack.fullname" . }}-mcp-server
+  labels:
+    {{- include "todo-stack.labels" . | nindent 4 }}
+    app: todo-mcp-server
+spec:
+  replicas: {{ .Values.mcpServer.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "todo-stack.selectorLabels" . | nindent 6 }}
+      app: todo-mcp-server
+  template:
+    metadata:
+      labels:
+        {{- include "todo-stack.selectorLabels" . | nindent 8 }}
+        app: todo-mcp-server
+    spec:
+      containers:
+        - name: mcp-server
+          image: "{{ .Values.mcpServer.image.repository }}:{{ .Values.mcpServer.image.tag }}"
+          imagePullPolicy: {{ .Values.mcpServer.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            {{- range $key, $value := .Values.mcpServer.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.mcpServer.resources | nindent 12 }}
+          {{- if .Values.mcpServer.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.mcpServer.livenessProbe.httpGet.path }}
+              port: {{ .Values.mcpServer.livenessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.mcpServer.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.mcpServer.livenessProbe.periodSeconds }}
+          {{- end }}
+          {{- if .Values.mcpServer.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.mcpServer.readinessProbe.httpGet.path }}
+              port: {{ .Values.mcpServer.readinessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.mcpServer.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.mcpServer.readinessProbe.periodSeconds }}
+          {{- end }}
+{{- end }}
